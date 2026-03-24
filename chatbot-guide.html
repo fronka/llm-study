@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>チャットボット実践ガイド</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a18;
+    --paper: #f5f0e8;
+    --accent: #c0392b;
+    --accent2: #2c3e50;
+    --muted: #8a8070;
+    --rule: #d4cbbf;
+    --highlight: #fff3cd;
+    --code-bg: #2c3e50;
+    --code-text: #ecf0f1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  /* === HERO === */
+  .hero {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 300px; height: 300px;
+    border: 2px solid rgba(245,240,232,0.08);
+    border-radius: 50%;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; right: 40px;
+    width: 180px; height: 180px;
+    border: 1px solid rgba(245,240,232,0.06);
+    border-radius: 50%;
+  }
+  .hero-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 20px;
+    max-width: 700px;
+  }
+  .hero-sub {
+    color: rgba(245,240,232,0.6);
+    max-width: 560px;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .hero-meta {
+    margin-top: 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: rgba(245,240,232,0.3);
+    display: flex;
+    gap: 40px;
+  }
+
+  /* === TOC NAV === */
+  .toc-strip {
+    background: var(--accent);
+    padding: 0 60px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .toc-strip::-webkit-scrollbar { display: none; }
+  .toc-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    padding: 14px 20px;
+    white-space: nowrap;
+    cursor: pointer;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    transition: color 0.2s;
+    text-decoration: none;
+    letter-spacing: 0.05em;
+  }
+  .toc-item:hover { color: #fff; }
+  .toc-item span {
+    color: rgba(255,255,255,0.35);
+    margin-right: 6px;
+  }
+
+  /* === MAIN LAYOUT === */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  section {
+    padding: 70px 0 50px;
+    border-bottom: 1px solid var(--rule);
+  }
+  section:last-child { border-bottom: none; }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+  .section-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  p { margin-bottom: 16px; color: #3a3830; }
+  p:last-child { margin-bottom: 0; }
+
+  /* === CALLOUT CARDS === */
+  .card-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent2);
+    padding: 20px;
+    border-radius: 2px;
+  }
+  .card.accent { border-top-color: var(--accent); }
+  .card-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .card-title {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  /* === DIAGRAM-LIKE ELEMENTS === */
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 28px 0;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .flow-step {
+    flex: 1;
+    padding: 18px 16px;
+    background: #fff;
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .flow-step:last-child { border-right: none; }
+  .flow-step::after {
+    content: '→';
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 14px;
+    z-index: 1;
+    background: var(--paper);
+    padding: 2px;
+  }
+  .flow-step:last-child::after { display: none; }
+  .flow-step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .flow-step-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .flow-step p {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* === INSIGHT BLOCKS === */
+  .insight {
+    border-left: 3px solid var(--accent);
+    background: #fff;
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 0 2px 2px 0;
+  }
+  .insight-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .insight p { font-size: 14px; color: #3a3830; margin: 0; }
+
+  .insight.neutral {
+    border-left-color: var(--accent2);
+  }
+  .insight.neutral .insight-tag { color: var(--accent2); }
+
+  /* === COMPARE TABLE === */
+  .compare {
+    margin: 24px 0;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .compare-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .compare-header div {
+    padding: 12px 20px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .compare-header div:last-child { border-right: none; }
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--rule);
+  }
+  .compare-row div {
+    padding: 14px 20px;
+    font-size: 13px;
+    border-right: 1px solid var(--rule);
+    line-height: 1.6;
+  }
+  .compare-row div:last-child { border-right: none; }
+  .compare-row:nth-child(odd) div { background: rgba(255,255,255,0.5); }
+  .compare-row div.bad { color: #c0392b; }
+  .compare-row div.good { color: #27ae60; }
+
+  /* === U-CURVE VIZ === */
+  .u-curve-wrap {
+    background: var(--ink);
+    padding: 30px;
+    border-radius: 4px;
+    margin: 24px 0;
+    text-align: center;
+  }
+  .u-curve-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .u-curve-svg {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  /* === SESSION DECISION TREE === */
+  .decision-tree {
+    background: #fff;
+    border: 1px solid var(--rule);
+    padding: 28px;
+    margin: 24px 0;
+    border-radius: 3px;
+  }
+  .dt-node {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .dt-node:last-child { border-bottom: none; padding-bottom: 0; }
+  .dt-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .dt-icon.warn { background: #fff3cd; }
+  .dt-icon.danger { background: #fde8e8; }
+  .dt-icon.ok { background: #e8f5e9; }
+  .dt-content strong {
+    font-size: 14px;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .dt-content span {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* === HIGHLIGHT NOTE === */
+  .note-box {
+    background: var(--highlight);
+    border: 1px solid #f0d060;
+    padding: 18px 22px;
+    margin: 24px 0;
+    border-radius: 2px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .note-box strong { color: var(--accent); }
+
+  /* === CODE-STYLE EXAMPLE === */
+  .example-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 20px 24px;
+    margin: 20px 0;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .example-block .label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .example-block .bad-ex { color: #e74c3c; }
+  .example-block .good-ex { color: #2ecc71; }
+  .example-block .neutral-ex { color: rgba(255,255,255,0.7); }
+
+  /* === FOOTER === */
+  footer {
+    background: var(--ink);
+    color: rgba(245,240,232,0.4);
+    padding: 40px 60px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer span { color: rgba(245,240,232,0.2); }
+
+  /* === ANIMATIONS === */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate {
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  /* Stagger children */
+  section .section-header { animation: fadeUp 0.4s ease forwards; }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 640px) {
+    .hero { padding: 50px 24px 40px; }
+    .toc-strip { padding: 0 16px; }
+    .container { padding: 0 20px; }
+    .flow { flex-direction: column; }
+    .flow-step::after { display: none; }
+    footer { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">Internal Guide — ChatBot Operations</div>
+  <h1>チャットボットと<br>うまく会話するための<br>技術的背景と実践</h1>
+  <p class="hero-sub">
+    プロンプトテンプレを覚える必要はない。<br>
+    モデルがどう動いているかを知ることで、どんな状況でも判断できるようになる。
+  </p>
+  <div class="hero-meta">
+    <span>5 sections</span>
+    <span>社内向け実践資料</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<nav class="toc-strip">
+  <a href="#sec1" class="toc-item"><span>01</span> モデルは何を見ているか</a>
+  <a href="#sec2" class="toc-item"><span>02</span> 癖と特性を知る</a>
+  <a href="#sec3" class="toc-item"><span>03</span> 何をどこまで伝えるか</a>
+  <a href="#sec4" class="toc-item"><span>04</span> セッション設計</a>
+  <a href="#sec5" class="toc-item"><span>05</span> 失敗パターンと対処</a>
+</nav>
+
+<div class="container">
+
+  <!-- SECTION 1 -->
+  <section id="sec1">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">モデルは何を見ているか</h2>
+    </div>
+
+    <p>チャットボットに「記憶」はない。正確には、毎回の返答を生成するたびに、<strong>会話の最初から全部読み直している</strong>。前の発言を「覚えている」のではなく、毎回ゼロから処理しているだけだ。</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 01</div>
+        <div class="flow-step-title">会話全体をトークン化</div>
+        <p>テキストを小さな単位（トークン）に分割。英語で約3/4語=1トークン。</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 02</div>
+        <div class="flow-step-title">Attention計算</div>
+        <p>全トークン間の関係性を計算。2倍の長さで処理量は4倍になる。</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 03</div>
+        <div class="flow-step-title">次のトークン予測</div>
+        <p>「文脈的に最もありそうな続き」を確率的に生成する。</p>
+      </div>
+    </div>
+
+    <p>この「コンテキストウィンドウ」は有限だ。入りきらなくなると、古い部分から削られる。会話が長くなるほど、序盤の情報は参照されにくくなる。</p>
+
+    <div class="u-curve-wrap">
+      <div class="u-curve-label">Lost in the Middle — Stanford 2023 研究より</div>
+      <svg class="u-curve-svg" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Axes -->
+        <line x1="50" y1="160" x2="460" y2="160" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <line x1="50" y1="20" x2="50" y2="160" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <!-- U-curve path -->
+        <path d="M60,40 C120,40 140,140 250,145 C360,140 380,40 440,35"
+              stroke="#c0392b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Labels -->
+        <text x="60" y="178" fill="rgba(255,255,255,0.5)" font-size="11" font-family="Space Mono">先頭</text>
+        <text x="220" y="178" fill="rgba(255,255,255,0.5)" font-size="11" font-family="Space Mono">中間</text>
+        <text x="400" y="178" fill="rgba(255,255,255,0.5)" font-size="11" font-family="Space Mono">末尾</text>
+        <text x="10" y="45" fill="rgba(255,255,255,0.5)" font-size="10" font-family="Space Mono" writing-mode="vertical-rl">精度</text>
+        <!-- Annotation -->
+        <text x="200" y="120" fill="#e74c3c" font-size="11" font-family="Space Mono" text-anchor="middle">中間は精度が落ちる</text>
+        <text x="80" y="30" fill="#2ecc71" font-size="11" font-family="Space Mono">高</text>
+        <text x="80" y="155" fill="rgba(255,255,255,0.3)" font-size="11" font-family="Space Mono">低</text>
+      </svg>
+      <p style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:12px; font-family:'Space Mono',monospace;">
+        重要な情報はコンテキストの先頭か末尾に置く。真ん中に埋めると精度が落ちる。
+      </p>
+    </div>
+
+    <div class="insight neutral">
+      <div class="insight-tag">要点</div>
+      <p>「さっき言ったのに忘れてる」は記憶力の問題ではなく、アーキテクチャの制約。長い会話では重要な前提を末尾に再掲することが有効。</p>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="sec2">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">モデルの応答特性・癖を知る</h2>
+    </div>
+
+    <p>モデルは「正しいことを言う」よりも「人間が好む答えを生成する」よう訓練されている面がある。これはRLHF（人間のフィードバックによる強化学習）という訓練プロセスの副作用だ。実用上知っておくべき主な癖を整理する。</p>
+
+    <div class="card-row">
+      <div class="card accent">
+        <div class="card-label">癖 01</div>
+        <div class="card-title">お世辞に乗りやすい（Sycophancy）</div>
+        <p>「〜ですよね？」と誘導すると同意しやすくなる。ユーザーの前提が間違っていても追認する傾向がある。</p>
+      </div>
+      <div class="card accent">
+        <div class="card-label">癖 02</div>
+        <div class="card-title">埋めようとする（Hallucination）</div>
+        <p>わからないときでも「それらしい答え」を作ろうとする。不確実さより流暢さが優先されがち。</p>
+      </div>
+      <div class="card">
+        <div class="card-label">癖 03</div>
+        <div class="card-title">簡潔指示で精度が落ちる</div>
+        <p>「一言で答えて」は危険。短くさせると正確な反論ができず、不正確でも短い答えを選びがち。</p>
+      </div>
+      <div class="card">
+        <div class="card-label">癖 04</div>
+        <div class="card-title">序盤・末尾への偏り</div>
+        <p>長い文脈の中間部分は注意が薄れる。重要な制約や前提は先頭か直前に書く。</p>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-tag">Sycophancy の実例</div>
+      <p>「私はXだと思うんだけど、どう思う？」→ 多くの場合Xを肯定する方向で答える。意見を聞くときは先に自分の意見を言わないほうが純粋な評価を得やすい。</p>
+    </div>
+
+    <h3 style="font-family:'Noto Serif JP',serif; font-size:17px; margin: 32px 0 16px;">否定形 vs 肯定形</h3>
+    <p>モデルへの指示は否定形より肯定形のほうが通りやすい。「〜しないで」は解釈が曖昧になりやすい。</p>
+
+    <div class="compare">
+      <div class="compare-header">
+        <div>❌ 避けたほうがいい</div>
+        <div>✅ 推奨</div>
+      </div>
+      <div class="compare-row">
+        <div class="bad">「箇条書きにしないで」</div>
+        <div class="good">「段落形式の文章で書いて」</div>
+      </div>
+      <div class="compare-row">
+        <div class="bad">「長くしないで」</div>
+        <div class="good">「200字以内でまとめて」</div>
+      </div>
+      <div class="compare-row">
+        <div class="bad">「難しい言葉を使わないで」</div>
+        <div class="good">「中学生でも読めるレベルで書いて」</div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <strong>覚え方：</strong> モデルは「禁止」より「具体的な形式」が得意。「〜しないで」を使いたくなったら、代わりに「どうあってほしいか」を書く。
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="sec3">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">何をどこまで伝えるかの判断基準</h2>
+    </div>
+
+    <p>「詳しく書けばいい」は半分正解で半分間違い。情報が多すぎると中間が見落とされ、少なすぎると補完・憶測が入る。タスクの種類別に考えると整理しやすい。</p>
+
+    <div class="card-row">
+      <div class="card">
+        <div class="card-label">タスクタイプ A</div>
+        <div class="card-title">探索型</div>
+        <p>「アイデアを出してほしい」「何が考えられるか整理したい」→ 背景と目的だけ渡す。制約を先に詰めすぎると答えが狭まる。</p>
+      </div>
+      <div class="card">
+        <div class="card-label">タスクタイプ B</div>
+        <div class="card-title">実行型</div>
+        <p>「文章を書いてほしい」「コードを直してほしい」→ 形式・トーン・制約を明示。何が成果物かを先に言う。</p>
+      </div>
+      <div class="card accent">
+        <div class="card-label">タスクタイプ C</div>
+        <div class="card-title">検証型</div>
+        <p>「これは正しいか確認してほしい」→ 自分の意見を先に言わない。誘導を避けるためにニュートラルに問う。</p>
+      </div>
+    </div>
+
+    <h3 style="font-family:'Noto Serif JP',serif; font-size:17px; margin: 32px 0 16px;">情報の渡し方と順序</h3>
+    <p>同じ情報でも順番で結果が変わる。「役割 → 背景 → 具体的な依頼 → 制約」の順が安定しやすい。</p>
+
+    <div class="example-block">
+      <div class="label">効果的な構造の例</div>
+      <div class="neutral-ex">あなたは採用担当のベテランです。（役割）</div>
+      <div class="neutral-ex">弊社はスタートアップで、エンジニアを初めて採用します。（背景）</div>
+      <div class="neutral-ex">以下の職務経歴書について、採用すべきか評価してください。（依頼）</div>
+      <div class="neutral-ex">感情論ではなく、スキルと文化適合性の観点で判断してください。（制約）</div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-tag">後出し情報に注意</div>
+      <p>「ちなみに予算は10万円です」を後から足すと、モデルはそれまでの答えを撤回せずに加筆することが多い。前提が変わるなら新しいセッションか、明示的に「前の条件を無視して」と言う必要がある。</p>
+    </div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="sec4">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">セッション設計：いつ切り替えるか</h2>
+    </div>
+
+    <p>「一つの会話でずっとやり取りすべき」という思い込みは捨てたほうがいい。コンテキストが長くなるにつれて、初期の指示が希薄になり、答えがぶれ始める。これは「コンテキスト汚染」と呼ばれる状態だ。</p>
+
+    <h3 style="font-family:'Noto Serif JP',serif; font-size:17px; margin: 28px 0 16px;">新セッションに移るサインを見分ける</h3>
+
+    <div class="decision-tree">
+      <div class="dt-node">
+        <div class="dt-icon danger">🔴</div>
+        <div class="dt-content">
+          <strong>明らかに矛盾した回答が出始めた</strong>
+          <span>前の発言と逆のことを言う、以前の制約を無視する。コンテキストが長すぎて整合性が取れていない状態。今すぐ新セッションへ。</span>
+        </div>
+      </div>
+      <div class="dt-node">
+        <div class="dt-icon danger">🔴</div>
+        <div class="dt-content">
+          <strong>話題が根本的に変わる</strong>
+          <span>「マーケティング施策を考えていたが、次はコードを書きたい」など。文脈が異なる作業は別セッションが速い。</span>
+        </div>
+      </div>
+      <div class="dt-node">
+        <div class="dt-icon warn">🟡</div>
+        <div class="dt-content">
+          <strong>「さっき言ったのに」が増えてきた</strong>
+          <span>重要な前提を毎回再説明するはめになっているなら、セッションをリセットして前提を冒頭にまとめ直すほうが速い。</span>
+        </div>
+      </div>
+      <div class="dt-node">
+        <div class="dt-icon warn">🟡</div>
+        <div class="dt-content">
+          <strong>返答が全体的に曖昧・一般論になってきた</strong>
+          <span>具体性が落ちてきたら疲弊サイン。新セッションで前提を整理して再スタートを検討。</span>
+        </div>
+      </div>
+      <div class="dt-node">
+        <div class="dt-icon ok">🟢</div>
+        <div class="dt-content">
+          <strong>同一タスクの深掘りは続けていい</strong>
+          <span>同じ文書を繰り返し改訂する、同じコードを修正し続けるなど、文脈の継続が有益な場合は同一セッションを維持。</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-family:'Noto Serif JP',serif; font-size:17px; margin: 32px 0 16px;">長期タスクの分割方法</h3>
+    <p>複数セッションにまたがるタスクは、「引き継ぎ文書」を自分で作るのが現実的だ。セッション終了前にモデルに要約させる手もある。</p>
+
+    <div class="example-block">
+      <div class="label">セッション引き継ぎの依頼例</div>
+      <div class="neutral-ex">「このセッションで決まったことを、</div>
+      <div class="neutral-ex"> 次回のチャットの冒頭に貼れる形で箇条書きにして」</div>
+    </div>
+
+    <div class="note-box">
+      <strong>ルールを一つだけ覚えるなら：</strong> 「新しい前提が加わった」「話題が変わった」「答えがおかしくなった」の3つのうちどれかに当てはまったら、新セッション開始を検討する。
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="sec5">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">よくある失敗パターンと対処</h2>
+    </div>
+
+    <p>「なんかうまくいかない」と感じるとき、原因はだいたい以下のどれかだ。</p>
+
+    <div class="compare">
+      <div class="compare-header">
+        <div>症状</div>
+        <div>原因と対処</div>
+      </div>
+      <div class="compare-row">
+        <div>答えが的外れ・ズレる</div>
+        <div>目的を伝えていない。「なんのためにこれをやるか」を先に書く。</div>
+      </div>
+      <div class="compare-row">
+        <div>自信満々に間違えている</div>
+        <div>ハルシネーション。「わからない場合はわからないと言って」と明示する。</div>
+      </div>
+      <div class="compare-row">
+        <div>自分の意見を言うと即同意される</div>
+        <div>Sycophancy。意見を後出しにするか「批判的に評価して」と指示。</div>
+      </div>
+      <div class="compare-row">
+        <div>会話が進むほど答えが雑になる</div>
+        <div>コンテキスト汚染。新セッションで前提を冒頭にまとめ直す。</div>
+      </div>
+      <div class="compare-row">
+        <div>指示を無視される</div>
+        <div>指示が長文の中間にある。重要な制約は末尾に再掲する。</div>
+      </div>
+      <div class="compare-row">
+        <div>形式が指定どおりにならない</div>
+        <div>否定形で指示している。「どうあってほしいか」を肯定形で書く。</div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-tag">修正プロンプトのコツ</div>
+      <p>「違います」だけでは改善しにくい。「〇〇の部分が意図と違う。私が求めているのは△△です」と、何がずれているかと正解を同時に伝えると収束が速い。</p>
+    </div>
+
+    <div class="card-row" style="margin-top: 36px;">
+      <div class="card">
+        <div class="card-label">まとめ — 3つだけ覚える</div>
+        <div class="card-title">①重要情報は先頭か末尾に</div>
+        <p>中間は注意が薄れる。前提・制約・重要事項は先頭または直前に置く。</p>
+      </div>
+      <div class="card accent">
+        <div class="card-label">まとめ — 3つだけ覚える</div>
+        <div class="card-title">②検証はニュートラルに問う</div>
+        <p>意見を先に言うと同意される。批判的評価が必要なときは明示的に指示する。</p>
+      </div>
+      <div class="card">
+        <div class="card-label">まとめ — 3つだけ覚える</div>
+        <div class="card-title">③迷ったら新セッション</div>
+        <p>答えがおかしくなったら長引かせない。前提を整理して再スタートのほうが速い。</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div>ChatBot Practical Guide — 社内向け</div>
+  <div>技術的根拠：Stanford "Lost in the Middle" 2023 / Giskard Phare Benchmark / Anthropic研究</div>
+</footer>
+
+<script>
+  // Intersection Observer for section animations
+  const sections = document.querySelectorAll('section');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.05 });
+
+  sections.forEach(s => {
+    s.style.opacity = '0';
+    s.style.transform = 'translateY(16px)';
+    s.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(s);
+  });
+
+  // Smooth scroll for TOC
+  document.querySelectorAll('.toc-item').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM・AIエージェントについてのよくある誤解</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f5f3ee;
+  --surface:#fffefb;
+  --ink:#1a1814;
+  --ink2:#4a4640;
+  --ink3:#8a857e;
+  --rule:#d8d3cc;
+  --accent:#b84c2a;
+  --accent-bg:#fdf0ec;
+  --correct:#1a5c3a;
+  --correct-bg:#edf5f0;
+  --sans:'Noto Sans JP',sans-serif;
+  --serif:'Noto Serif JP',serif;
+  --mono:'JetBrains Mono',monospace;
+}
+
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.7;
+}
+
+.page{
+  max-width:860px;
+  margin:0 auto;
+  padding:64px 40px 120px;
+}
+
+header{
+  border-top:3px solid var(--ink);
+  padding-top:32px;
+  margin-bottom:56px;
+}
+
+.kicker{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.12em;
+  color:var(--ink3);
+  margin-bottom:16px;
+  text-transform:uppercase;
+}
+
+h1{
+  font-family:var(--serif);
+  font-size:clamp(28px,5vw,46px);
+  font-weight:700;
+  line-height:1.2;
+  letter-spacing:-.01em;
+  margin-bottom:20px;
+}
+
+.intro{
+  font-size:16px;
+  color:var(--ink2);
+  line-height:1.8;
+  max-width:620px;
+  border-left:3px solid var(--accent);
+  padding-left:20px;
+  margin-top:24px;
+}
+
+.chapter{
+  margin-bottom:64px;
+}
+
+.chapter-label{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:32px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--rule);
+}
+
+.chapter-num{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--ink3);
+  letter-spacing:.08em;
+}
+
+.chapter-title{
+  font-family:var(--serif);
+  font-size:20px;
+  font-weight:700;
+}
+
+.myth-block{
+  margin-bottom:40px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  border:1px solid var(--rule);
+  border-radius:4px;
+  overflow:hidden;
+  background:var(--surface);
+}
+
+.myth-side{
+  padding:24px 28px;
+  border-right:1px solid var(--rule);
+  background:var(--accent-bg);
+}
+
+.fact-side{
+  padding:24px 28px;
+}
+
+.side-label{
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.1em;
+  margin-bottom:10px;
+}
+
+.myth-side .side-label{color:var(--accent);}
+.fact-side .side-label{color:var(--correct);}
+
+.myth-headline{
+  font-family:var(--serif);
+  font-size:17px;
+  font-weight:700;
+  line-height:1.4;
+  color:var(--accent);
+  margin-bottom:8px;
+}
+
+.fact-headline{
+  font-family:var(--serif);
+  font-size:17px;
+  font-weight:700;
+  line-height:1.4;
+  color:var(--correct);
+  margin-bottom:8px;
+}
+
+.body-text{
+  font-size:13px;
+  color:var(--ink2);
+  line-height:1.8;
+}
+
+.body-text strong{
+  color:var(--ink);
+  font-weight:500;
+}
+
+.full-width-block{
+  margin-bottom:40px;
+  border:1px solid var(--rule);
+  border-radius:4px;
+  overflow:hidden;
+  background:var(--surface);
+}
+
+.full-myth{
+  padding:20px 28px;
+  background:var(--accent-bg);
+  border-bottom:1px solid var(--rule);
+  display:flex;
+  align-items:baseline;
+  gap:16px;
+}
+
+.full-fact{
+  padding:20px 28px;
+}
+
+.full-myth .side-label{color:var(--accent);}
+.full-fact .side-label{color:var(--correct);}
+
+.inline-label{
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.1em;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+
+.full-myth .inline-label{color:var(--accent);}
+
+.scale-diagram{
+  margin:32px 0 40px;
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-radius:4px;
+  padding:28px;
+}
+
+.scale-title{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.08em;
+  color:var(--ink3);
+  margin-bottom:20px;
+}
+
+.scale-row{
+  display:grid;
+  grid-template-columns:140px 1fr auto;
+  gap:12px;
+  align-items:center;
+  padding:12px 0;
+  border-bottom:1px solid var(--rule);
+}
+
+.scale-row:last-child{border-bottom:none;}
+
+.scale-name{
+  font-size:13px;
+  font-weight:500;
+  color:var(--ink);
+}
+
+.scale-bar-wrap{
+  height:8px;
+  background:var(--bg);
+  border-radius:2px;
+  overflow:hidden;
+}
+
+.scale-bar{
+  height:100%;
+  border-radius:2px;
+  background:var(--ink3);
+}
+
+.scale-bar.lv1{width:8%; background:#c8d4b8;}
+.scale-bar.lv2{width:22%; background:#8aaa72;}
+.scale-bar.lv3{width:52%; background:#4a7a38;}
+.scale-bar.lv4{width:100%; background:#1a5c3a;}
+
+.scale-note{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--ink3);
+  white-space:nowrap;
+}
+
+.insight-box{
+  margin:40px 0;
+  padding:24px 28px;
+  background:var(--ink);
+  color:#f5f3ee;
+  border-radius:4px;
+}
+
+.insight-box .kicker{color:#a09890;margin-bottom:10px;}
+
+.insight-box p{
+  font-family:var(--serif);
+  font-size:18px;
+  line-height:1.6;
+  font-weight:400;
+}
+
+.insight-box strong{color:#e8c4a8;}
+
+.divider{
+  border:none;
+  border-top:1px solid var(--rule);
+  margin:56px 0;
+}
+
+footer{
+  border-top:1px solid var(--rule);
+  padding-top:24px;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--ink3);
+  letter-spacing:.06em;
+}
+
+@media(max-width:640px){
+  .page{padding:40px 20px 80px;}
+  .myth-block{grid-template-columns:1fr;}
+  .myth-side{border-right:none;border-bottom:1px solid var(--rule);}
+  .scale-row{grid-template-columns:100px 1fr auto;}
+  .scale-name{font-size:12px;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="kicker">DX推進チーム — 技術理解ノート</div>
+  <h1>LLMとAIエージェントについての<br>よくある誤解</h1>
+  <p class="intro">「学習させる」「嘘をつかせない」「何でも自動化できる」——これらの言葉が現場の議論を混乱させている。技術の正確な理解は、正しい投資判断と設計の前提になる。</p>
+</header>
+
+
+<!-- CHAPTER 1 -->
+<section class="chapter">
+  <div class="chapter-label">
+    <span class="chapter-num">01</span>
+    <span class="chapter-title">LLMの動作原理</span>
+  </div>
+
+  <div class="myth-block">
+    <div class="myth-side">
+      <div class="side-label">MYTH</div>
+      <div class="myth-headline">LLMは「考えて」「判断して」いる</div>
+      <p class="body-text">計画・推論・判断という言葉を使うが、内部では知的な処理が行われている——そう思われがち。</p>
+    </div>
+    <div class="fact-side">
+      <div class="side-label">FACT</div>
+      <div class="fact-headline">やっていることは「次のトークン予測」の連続</div>
+      <p class="body-text">内部状態も意図も記憶もない。「まず〇〇を確認します」という出力は、<strong>そう予測されたトークンが並んだだけ</strong>。「考えているように見える」のはパターンマッチングの結果。擬人化が誤解を生む。</p>
+    </div>
+  </div>
+
+  <div class="myth-block">
+    <div class="myth-side">
+      <div class="side-label">MYTH</div>
+      <div class="myth-headline">「嘘をつくな」と指示すれば<br>精度が上がる</div>
+      <p class="body-text">プロンプトで制御できると思われているが——</p>
+    </div>
+    <div class="fact-side">
+      <div class="side-label">FACT</div>
+      <div class="fact-headline">LLMは自分の出力が嘘かどうか判断できない</div>
+      <p class="body-text">嘘かどうかを自己判定する手段を持っていないものに「嘘をつくな」と命令しても構造的に無意味。<strong>「嘘をつかせない」より「嘘が出ても被害が出ない設計にする」</strong>が正しいアプローチ。</p>
+    </div>
+  </div>
+
+  <div class="full-width-block">
+    <div class="full-myth">
+      <span class="inline-label">MYTH</span>
+      <span style="font-family:var(--serif);font-size:16px;font-weight:700;color:var(--accent)">根拠（web・社内文書）を与えれば正確になる</span>
+    </div>
+    <div class="full-fact">
+      <div class="side-label">FACT</div>
+      <p class="body-text">RAGやweb検索は「ハルシネーションを減らす」ではなく、<strong>「嘘のソースを外部に移す」</strong>だけ。web上にも社内文書にも間違いはある。古い規格をRAGで引いて自信満々に回答する方が、「わかりません」より危険なケースもある。ハルシネーション対策は技術の問題ではなく、<strong>嘘が混入する前提のシステム設計の問題</strong>。品質管理で「不良品が出ない工程」より「不良品が出ても止まる工程」を設計するのと同じ発想。</p>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- CHAPTER 2 -->
+<section class="chapter">
+  <div class="chapter-label">
+    <span class="chapter-num">02</span>
+    <span class="chapter-title">RAGとAgentの仕組み</span>
+  </div>
+
+  <div class="myth-block">
+    <div class="myth-side">
+      <div class="side-label">MYTH</div>
+      <div class="myth-headline">RAGはAIに社内データを<br>「学習させる」技術</div>
+      <p class="body-text">データを入れるとAIが賢くなる、というイメージで語られることが多い。</p>
+    </div>
+    <div class="fact-side">
+      <div class="side-label">FACT</div>
+      <div class="fact-headline">学習は一切しない。質問のたびに検索して「読ませる」だけ</div>
+      <p class="body-text">モデルの重みは変わらない。質問 → 社内DBを検索 → 関連文書を取得 → LLMにその場で読ませて回答生成。図書館員が本を探してきて読み上げるイメージ。<strong>図書館員自身が賢くなるわけではない。</strong></p>
+    </div>
+  </div>
+
+  <div class="myth-block">
+    <div class="myth-side">
+      <div class="side-label">MYTH</div>
+      <div class="myth-headline">Agentが自律的に<br>計画・実行・判断をループしている</div>
+      <p class="body-text">「自律AI」という言葉のイメージから、LLM自身が自走していると思われがち。</p>
+    </div>
+    <div class="fact-side">
+      <div class="side-label">FACT</div>
+      <div class="fact-headline">ループしているのは外側のオーケストレーター</div>
+      <p class="body-text">LLMは各ステップで「次に何と書くか」を予測するだけ。ループ制御・ツール呼び出し検出・エラー処理は<strong>外部プログラムが担っている</strong>。RAGも構造的にはツール呼び出し1回。Agentはそれを目標達成まで繰り返す点が違う。</p>
+    </div>
+  </div>
+
+  <div class="full-width-block">
+    <div class="full-myth">
+      <span class="inline-label">MYTH</span>
+      <span style="font-family:var(--serif);font-size:16px;font-weight:700;color:var(--accent)">Agentは何でも自動化できる</span>
+    </div>
+    <div class="full-fact">
+      <div class="side-label">FACT</div>
+      <p class="body-text"><strong>与えたツールの範囲内でしか動けない。</strong>ツールを与えなければChatbotと同じ。「何ができるか」は設計次第であり、ループ上限・タイムアウト・承認フロー・エスカレーション条件は必ず外側に設計が必要。製造業文脈では監査要件も考慮すること。「AIが自律的に動く」ではなく「設計した範囲でプログラムが動く」という認識が正確。</p>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- CHAPTER 3 -->
+<section class="chapter">
+  <div class="chapter-label">
+    <span class="chapter-num">03</span>
+    <span class="chapter-title">「学習」という言葉の罠</span>
+  </div>
+
+  <div class="scale-diagram">
+    <div class="scale-title">LEARNING HIERARCHY — コストと難易度</div>
+    <div class="scale-row">
+      <div class="scale-name">プロンプト</div>
+      <div class="scale-bar-wrap"><div class="scale-bar lv1"></div></div>
+      <div class="scale-note">今日から使える</div>
+    </div>
+    <div class="scale-row">
+      <div class="scale-name">RAG</div>
+      <div class="scale-bar-wrap"><div class="scale-bar lv2"></div></div>
+      <div class="scale-note">DB設計が必要</div>
+    </div>
+    <div class="scale-row">
+      <div class="scale-name">ファインチューニング</div>
+      <div class="scale-bar-wrap"><div class="scale-bar lv3"></div></div>
+      <div class="scale-note">データ・GPU・評価が必要</div>
+    </div>
+    <div class="scale-row">
+      <div class="scale-name">事前学習</div>
+      <div class="scale-bar-wrap"><div class="scale-bar lv4"></div></div>
+      <div class="scale-note">巨大IT企業の領域</div>
+    </div>
+  </div>
+
+  <div class="myth-block">
+    <div class="myth-side">
+      <div class="side-label">MYTH</div>
+      <div class="myth-headline">社内でLLMに学習させて<br>カスタマイズできる</div>
+      <p class="body-text">「自社専用AIを作る」というフレーズとともに語られがち。</p>
+    </div>
+    <div class="fact-side">
+      <div class="side-label">FACT</div>
+      <div class="fact-headline">事前学習はGoogleやMeta級のリソースが前提</div>
+      <p class="body-text">数百億〜数千億パラメータのモデルを一から学習するには、<strong>数百億円規模のGPUクラスタと電力</strong>が必要。一般企業が「学習させる」のは現実的ではない。LoRAなど軽量手法でも、高品質な学習データの設計・収集・評価が本体の難しさ。</p>
+    </div>
+  </div>
+
+  <div class="myth-block">
+    <div class="myth-side">
+      <div class="side-label">MYTH</div>
+      <div class="myth-headline">ファインチューニングすれば<br>性能が上がる</div>
+      <p class="body-text">特定用途に特化させれば改善するはず——という直感がある。</p>
+    </div>
+    <div class="fact-side">
+      <div class="side-label">FACT</div>
+      <div class="fact-headline">特定タスクを改善すると他が劣化する</div>
+      <p class="body-text">「破滅的忘却」と呼ばれる現象で、<strong>ベンチマーク全体でみると性能が落ちることがある</strong>。また知識の注入（社内情報を覚えさせる）にはファインチューニングは不向きで、RAGの方が向いている。ファインチューニングは「振る舞いを変える」目的に使うもの。</p>
+    </div>
+  </div>
+
+  <div class="full-width-block">
+    <div class="full-myth">
+      <span class="inline-label">MYTH</span>
+      <span style="font-family:var(--serif);font-size:16px;font-weight:700;color:var(--accent)">振る舞いを変えるにはファインチューニングが必要</span>
+    </div>
+    <div class="full-fact">
+      <div class="side-label">FACT</div>
+      <p class="body-text">回答のトーン・口調、出力フォーマット、役割設定（「品質担当として回答せよ」）、社内用語の使用——これらは<strong>プロンプトだけで対応できる</strong>ことがほとんど。正しい順序は「プロンプトで解決 → 無理ならRAG → それでも無理ならファインチューニングを検討」。「なぜファインチューニングが必要か」を説明できない段階で着手すべきではない。</p>
+    </div>
+  </div>
+
+</section>
+
+<div class="insight-box">
+  <div class="kicker">BOTTOM LINE</div>
+  <p>LLMは「嘘をつかない」ようにはならない。Agentは「何でも自動化」できるわけではない。「学習させる」は巨大IT企業の話。<strong>重要なのは、これらの限界を前提としたうえでシステムと運用を設計すること。</strong>技術を過大評価しても過小評価しても、正しい投資判断はできない。</p>
+</div>
+
+<footer>
+  DX推進チーム 技術理解ノート — LLM・AIエージェント編
+</footer>
+
+</div>
+</body>
+</html>
