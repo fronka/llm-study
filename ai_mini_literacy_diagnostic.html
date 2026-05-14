@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI リテラシー診断</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600&family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F3EE;
+    --ink: #1A1814;
+    --ink-light: #6B6660;
+    --ink-faint: #B8B4AE;
+    --border: #D8D4CE;
+    --it-accent: #2B4BFF;
+    --it-pale: #EEF1FF;
+    --non-accent: #1E8C5A;
+    --non-pale: #EBF7F2;
+    --mind-accent: #C45000;
+    --mind-pale: #FEF2EB;
+    --white: #FDFCFA;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── TOP SELECTOR ── */
+  .selector-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+  }
+
+  .top-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+
+  .top-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(22px, 4vw, 36px);
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: center;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+
+  .top-sub {
+    font-size: 14px;
+    color: var(--ink-light);
+    text-align: center;
+    max-width: 480px;
+    line-height: 1.75;
+    margin-bottom: 3rem;
+  }
+
+  .cards-row {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .diag-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem 1.75rem;
+    width: 260px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .diag-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .diag-card.it::before { background: var(--it-accent); }
+  .diag-card.non::before { background: var(--non-accent); }
+  .diag-card.mind::before { background: var(--mind-accent); }
+
+  .diag-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.09); }
+
+  .card-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+
+  .it .card-tag { background: var(--it-pale); color: var(--it-accent); }
+  .non .card-tag { background: var(--non-pale); color: var(--non-accent); }
+  .mind .card-tag { background: var(--mind-pale); color: var(--mind-accent); }
+
+  .card-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-desc {
+    font-size: 12.5px;
+    color: var(--ink-light);
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+
+  /* ── QUIZ SCREEN ── */
+  .quiz-screen { display: none; min-height: 100vh; }
+
+  .quiz-header {
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .quiz-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .back-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--ink-light);
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .back-btn:hover { background: var(--bg); }
+
+  .quiz-type-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .it-badge { background: var(--it-pale); color: var(--it-accent); }
+  .non-badge { background: var(--non-pale); color: var(--non-accent); }
+  .mind-badge { background: var(--mind-pale); color: var(--mind-accent); }
+
+  .progress-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 2px;
+    transition: width 0.4s ease;
+    position: absolute; top: 0; left: 0;
+  }
+
+  .it-fill { background: var(--it-accent); }
+  .non-fill { background: var(--non-accent); }
+  .mind-fill { background: var(--mind-accent); }
+
+  .quiz-body {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+  }
+
+  .q-domain {
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.6rem;
+  }
+
+  .q-text {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.65;
+    color: var(--ink);
+    margin-bottom: 2rem;
+  }
+
+  .options-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 2.5rem; }
+
+  .opt-btn {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 15px 18px;
+    text-align: left;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+    line-height: 1.6;
+  }
+
+  .opt-btn:hover { background: var(--bg); border-color: #C0BCBA; }
+
+  .opt-btn.selected-it { border-color: var(--it-accent); background: var(--it-pale); }
+  .opt-btn.selected-non { border-color: var(--non-accent); background: var(--non-pale); }
+  .opt-btn.selected-mind { border-color: var(--mind-accent); background: var(--mind-pale); }
+
+  .next-btn {
+    padding: 12px 28px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--ink-light);
+    opacity: 0.4;
+    pointer-events: none;
+    transition: opacity 0.2s, background 0.15s;
+  }
+
+  .next-btn.ready { opacity: 1; pointer-events: auto; }
+  .next-btn.ready:hover { background: var(--bg); }
+
+  /* ── RESULT SCREEN ── */
+  .result-screen { display: none; min-height: 100vh; }
+
+  .result-header {
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+  }
+
+  .result-body {
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .result-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.5rem;
+  }
+
+  .result-level {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+
+  .result-score-line {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--ink-light);
+    margin-bottom: 1rem;
+  }
+
+  .result-desc {
+    font-size: 14px;
+    color: var(--ink-light);
+    line-height: 1.85;
+    max-width: 500px;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .domain-section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 1.25rem;
+  }
+
+  .domain-bars { margin-bottom: 2.5rem; }
+
+  .domain-row {
+    display: grid;
+    grid-template-columns: 130px 1fr 36px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .domain-label { font-size: 12.5px; color: var(--ink-light); }
+
+  .bar-track { height: 5px; background: var(--border); border-radius: 3px; }
+
+  .bar-val {
+    height: 5px;
+    border-radius: 3px;
+    transition: width 0.7s cubic-bezier(.22,.68,0,1.2);
+  }
+
+  .bar-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    text-align: right;
+  }
+
+  /* mindset result */
+  .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 2rem; }
+
+  .type-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    background: var(--white);
+  }
+
+  .type-card.dominant { border-color: var(--mind-accent); background: var(--mind-pale); }
+
+  .type-name {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .type-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  .type-label { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
+
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2rem; }
+
+  .action-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+  .action-btn:hover { background: var(--bg); }
+
+  .action-btn.primary {
+    background: var(--ink);
+    color: var(--white);
+    border-color: var(--ink);
+  }
+  .action-btn.primary:hover { opacity: 0.85; }
+
+  /* ── ANSWER REVIEW ── */
+  .review-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--ink-light);
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1.5rem;
+    transition: background 0.15s;
+  }
+  .review-toggle:hover { background: var(--bg); }
+  .review-toggle-arrow { margin-left: auto; transition: transform 0.25s; }
+  .review-toggle.open .review-toggle-arrow { transform: rotate(180deg); }
+
+  .review-body { display: none; margin-top: 1.25rem; }
+  .review-body.open { display: block; }
+
+  .review-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+    background: var(--white);
+  }
+
+  .review-item-header {
+    padding: 12px 14px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .review-q-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+  }
+
+  .review-q-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+
+  .review-opts { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+
+  .review-opt {
+    font-size: 12.5px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    line-height: 1.55;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .review-opt-icon {
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .review-opt.correct-not-chosen {
+    background: #EBF7F2;
+    border-color: #1E8C5A;
+    color: #1E8C5A;
+  }
+
+  .review-opt.user-correct {
+    background: #EBF7F2;
+    border-color: #1E8C5A;
+    color: #1E8C5A;
+    font-weight: 500;
+  }
+
+  .review-opt.user-wrong {
+    background: #FEF2EB;
+    border-color: #C45000;
+    color: #C45000;
+  }
+
+  .review-opt.user-partial {
+    background: #FFFBEB;
+    border-color: #C4880A;
+    color: #A36E00;
+  }
+
+  .review-opt.neutral {
+    color: var(--ink-light);
+    background: var(--bg);
+  }
+</style>
+</head>
+<body>
+
+<!-- ① 診断選択 -->
+<div class="selector-screen" id="selectorScreen">
+  <div class="top-eyebrow">AI Literacy Diagnostic</div>
+  <h1 class="top-title">AIリテラシー診断</h1>
+  <p class="top-sub">対象に合わせた3種類の診断を用意しています。<br>受診する診断を選んでください。</p>
+  <div class="cards-row">
+    <div class="diag-card it" onclick="startDiag('it')">
+      <span class="card-tag">Tech</span>
+      <div class="card-title">技術リテラシー診断<br>IT技術者版</div>
+      <div class="card-desc">アーキテクチャ設計・API活用・セキュリティ・最新動向まで、実装者視点で問う上級設問。</div>
+      <div class="card-meta">20問 · 約10分</div>
+    </div>
+    <div class="diag-card non" onclick="startDiag('non')">
+      <span class="card-tag">Business</span>
+      <div class="card-title">技術リテラシー診断<br>非IT技術者版</div>
+      <div class="card-desc">専門用語なし。ビジネス利用者として押さえるべきAIの仕組みと実務上の注意点を問う。</div>
+      <div class="card-meta">15問 · 約7分</div>
+    </div>
+    <div class="diag-card mind" onclick="startDiag('mind')">
+      <span class="card-tag">Mindset</span>
+      <div class="card-title">AIとの向き合い方<br>マインドセット診断</div>
+      <div class="card-desc">正解なし。AIをどう認識し・信用し・使い分けているか、思考傾向を4タイプで分類。</div>
+      <div class="card-meta">15問 · 約7分</div>
+    </div>
+  </div>
+</div>
+
+<!-- ② 問題画面 -->
+<div class="quiz-screen" id="quizScreen">
+  <div class="quiz-header">
+    <div class="quiz-header-left">
+      <button class="back-btn" onclick="goHome()">← 戻る</button>
+      <span class="quiz-type-badge" id="quizBadge"></span>
+    </div>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="quiz-body">
+    <div class="q-domain" id="qDomain"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options-list" id="optsList"></div>
+    <button class="next-btn" id="nextBtn" onclick="goNext()">次の質問 →</button>
+  </div>
+</div>
+
+<!-- ③ 結果画面 -->
+<div class="result-screen" id="resultScreen">
+  <div class="result-header">
+    <button class="back-btn" onclick="goHome()">← ホームへ</button>
+    <span class="quiz-type-badge" id="resultBadge"></span>
+  </div>
+  <div class="result-body" id="resultBody"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+
+const DIAGS = {
+
+  // ── IT技術者版 (20問) ──────────────────────────
+  it: {
+    label: 'IT技術者版',
+    badgeClass: 'it-badge',
+    fillClass: 'it-fill',
+    selectedClass: 'selected-it',
+    accentColor: '#2B4BFF',
+    type: 'scored',
+    domains: [
+      { key: 'architecture', label: 'アーキテクチャ設計' },
+      { key: 'prompt',       label: 'プロンプト設計' },
+      { key: 'rag',          label: 'RAG・検索拡張' },
+      { key: 'agent',        label: 'エージェント・MCP' },
+      { key: 'finetuning',   label: 'FT・モデル選定' },
+      { key: 'cost',         label: 'コスト・運用設計' },
+      { key: 'security',     label: 'セキュリティ' },
+    ],
+    levels: [
+      { min: 0,  max: 19, label: '入門',   desc: 'LLMアプリ開発の基礎から体系的に学ぶ段階です。公式ドキュメントやAPIチュートリアルから始めましょう。' },
+      { min: 20, max: 34, label: '初級',   desc: 'APIの基本は押さえています。設計パターン・コスト最適化・セキュリティを強化することで実務品質が上がります。' },
+      { min: 35, max: 47, label: '中級',   desc: 'LLMシステムを設計・実装できるレベルです。エージェントアーキテクチャとセキュリティの深掘りが次のステップです。' },
+      { min: 48, max: 60, label: '上級',   desc: 'LLMシステム全体を設計・評価・運用できる高度な理解があります。組織内の技術推進をリードできるレベルです。' },
+    ],
+    questions: [
+      { domain:'architecture', text:'LLMアプリのコンテキストウィンドウが逼迫してきたとき、設計上の対応策として最も適切なものはどれですか？',
+        opts:[
+          {t:'会話履歴を全件保持しつつ古いものから切り捨てる',s:1},
+          {t:'要約・圧縮・スライディングウィンドウなどで文脈を維持しながらトークンを削減する',s:3},
+          {t:'コンテキストが埋まった時点でセッションをリセットする',s:0},
+          {t:'より高いコンテキストウィンドウのモデルに乗り換えるだけで解決する',s:1},
+        ]},
+      { domain:'architecture', text:'マルチモーダルモデルを使って「PDFの表を読み取りデータ分析する」パイプラインを設計するとき、最も堅牢なアプローチはどれですか？',
+        opts:[
+          {t:'PDFをそのままAPIに投げてモデルに全て解釈させる',s:1},
+          {t:'PDFをページ画像化→表領域検出→OCR or Vision API→構造化データ抽出という段階的なパイプラインを組む',s:3},
+          {t:'PDFからテキストを抽出しそのままLLMに渡す',s:1},
+          {t:'人手でExcelに転記してから分析する',s:0},
+        ]},
+      { domain:'prompt', text:'大規模なコードレビューをLLMに依頼するとき、出力の一貫性・精度を高めるために最も効果的なプロンプト設計はどれですか？',
+        opts:[
+          {t:'「このコードをレビューして」とシンプルに依頼する',s:0},
+          {t:'レビュー観点（セキュリティ・可読性・パフォーマンス）を列挙し、出力フォーマットをJSONで指定してシステムプロンプトに含める',s:3},
+          {t:'Few-shotとして過去のレビューコメントを大量に貼り付ける',s:1},
+          {t:'毎回モデルに自由に出力させ、人間が後でフィルタする',s:1},
+        ]},
+      { domain:'prompt', text:'Chain-of-Thought（CoT）プロンプティングが特に効果を発揮しにくいタスクはどれですか？',
+        opts:[
+          {t:'複雑な数学の証明',s:0},
+          {t:'多段階の推論が必要なコードデバッグ',s:0},
+          {t:'固定フォーマットへの定型データ変換（例：CSV→JSON）',s:3},
+          {t:'因果関係の分析',s:0},
+        ]},
+      { domain:'rag', text:'RAGシステムで「意味的に類似しているが微妙にズレた文書」が検索上位に来てしまう問題への対処として最も適切なものはどれですか？',
+        opts:[
+          {t:'クエリ拡張（Query Expansion）でバリエーションを増やして検索精度を上げる',s:1},
+          {t:'再ランキング（Reranker）モデルを挟んで関連度を再評価する',s:3},
+          {t:'ベクトルDBのインデックスをフルリビルドする',s:0},
+          {t:'検索件数（top-k）を増やして人間が選ぶ',s:1},
+        ]},
+      { domain:'rag', text:'Hybrid Search（BM25 + ベクトル検索）をRAGに採用する主な理由として正しいものはどれですか？',
+        opts:[
+          {t:'コストが大幅に削減できるから',s:0},
+          {t:'キーワード完全一致の強みと意味的類似検索の強みを組み合わせて検索漏れを減らすため',s:3},
+          {t:'ベクトルDBがBM25より遅いので速度補完するため',s:0},
+          {t:'ライセンス上BM25が必須とされているから',s:0},
+        ]},
+      { domain:'agent', text:'LLMエージェントで「ツール呼び出しのループが収束せず無限に繰り返す」問題への設計上の対策として最も適切なものはどれですか？',
+        opts:[
+          {t:'ループを検出したらAPIコールを即時停止する',s:1},
+          {t:'最大ステップ数の上限・停止条件の明示・ループ検出ロジックを設計に組み込む',s:3},
+          {t:'エージェントに「ループしないで」と指示するだけで十分',s:0},
+          {t:'ツールの数を減らしてループの原因を排除する',s:1},
+        ]},
+      { domain:'agent', text:'MCPサーバーをLLMアプリに組み込む主なメリットとして最も正確なものはどれですか？',
+        opts:[
+          {t:'モデルの推論速度が向上する',s:0},
+          {t:'外部ツール・データソースへの接続インターフェースを標準化し、エージェントの拡張コストを下げる',s:3},
+          {t:'ツール呼び出しのためのプロンプトを自動で最適化・生成する',s:1},
+          {t:'モデルをオフラインで動作させられる',s:0},
+        ]},
+      { domain:'finetuning', text:'ファインチューニングよりもシステムプロンプト設計を優先すべき判断基準として正しいものはどれですか？',
+        opts:[
+          {t:'出力の品質が重要な場合はすべてファインチューニングが優先',s:0},
+          {t:'タスクの定義・スタイル指定・制約の多くがプロンプトで表現できる場合、データ準備コストが高いFTよりプロンプトを先に最適化すべき',s:3},
+          {t:'ファインチューニングは常にプロンプト設計より効果が高い',s:0},
+          {t:'プロンプトが100文字を超えたらファインチューニングに切り替えるべき',s:0},
+        ]},
+      { domain:'finetuning', text:'推論特化モデル（o3/o4-mini系）と汎用モデル（GPT-4o/Claude Sonnet系）を選定する基準として最も適切なものはどれですか？',
+        opts:[
+          {t:'推論モデルは常に優れているので全タスクに使うべき',s:0},
+          {t:'深い論理推論・数学・複雑なコード生成には推論モデル、レイテンシとコストが重要な日常タスクには汎用モデル',s:3},
+          {t:'推論モデルは英語専用で日本語タスクには使えない',s:0},
+          {t:'推論モデルはAPI未公開でローカルのみ利用可能',s:0},
+        ]},
+      { domain:'cost', text:'チャット形式のLLMアプリでAPIコストが想定より大幅に膨らむ主な原因として最も見落とされやすいものはどれですか？',
+        opts:[
+          {t:'出力トークン数が多いこと',s:1},
+          {t:'会話履歴とシステムプロンプトを毎リクエスト全量送信することで入力トークンが累積増加すること',s:3},
+          {t:'モデルのバージョンが古いこと',s:0},
+          {t:'ユーザー数が多いこと単体',s:0},
+        ]},
+      { domain:'cost', text:'Prompt Caching（AnthropicやOpenAIが提供）を活用することで主に削減できるものはどれですか？',
+        opts:[
+          {t:'出力トークンのコスト',s:0},
+          {t:'変化しない長いシステムプロンプトや参照文書の入力トークンコスト',s:3},
+          {t:'APIのレイテンシのみ（コスト削減効果はない）',s:0},
+          {t:'モデルのハルシネーション率',s:0},
+        ]},
+      { domain:'security', text:'プロンプトインジェクション攻撃をシステム設計で緩和する手法として最も有効なものはどれですか？',
+        opts:[
+          {t:'システムプロンプトを長くして優先度を上げる',s:0},
+          {t:'ユーザー入力とシステム指示を明確に分離し、入力のサニタイズ・出力の検証・権限の最小化を組み合わせる',s:3},
+          {t:'HTTPSを使えば防げる',s:0},
+          {t:'エンドユーザーを信頼してサニタイズを省略する',s:0},
+        ]},
+      { domain:'security', text:'企業がLLM APIを利用する際、情報セキュリティポリシーとして必ず検討すべき事項はどれですか？',
+        opts:[
+          {t:'APIプロバイダーのデータ利用規約・学習利用ポリシーの確認と、機密データの入力可否の方針策定',s:3},
+          {t:'APIキーをソースコードにハードコードする',s:0},
+          {t:'全社員が同一APIキーを使い回す',s:0},
+          {t:'セキュリティよりも利便性を最優先にする',s:0},
+        ]},
+      { domain:'agent', text:'マルチエージェントシステムで「オーケストレーター→サブエージェント」という構成をとる主なメリットはどれですか？',
+        opts:[
+          {t:'API呼び出しを1回に集約してコストを下げる',s:0},
+          {t:'タスクを専門エージェントに分割して並列処理し、単一エージェントでは破綻する長大タスクをこなす',s:3},
+          {t:'モデルを使わずにルールベースで動作できる',s:0},
+          {t:'レイテンシを必ず短縮できる',s:0},
+        ]},
+      { domain:'architecture', text:'LLMの出力に対してEvaluator（評価LLM）を別途設けるパターンの主な目的はどれですか？',
+        opts:[
+          {t:'コストを半分にする',s:0},
+          {t:'生成物の品質・安全性・形式適合性を自動でチェックしてフィードバックループを作る',s:3},
+          {t:'出力速度を上げる',s:0},
+          {t:'ファインチューニングの代替として使う',s:0},
+        ]},
+      { domain:'cost', text:'LLMを使ったバッチ処理で大量のドキュメントを要約するとき、コストと品質のバランス上、最も合理的なアーキテクチャはどれですか？',
+        opts:[
+          {t:'全ドキュメントを最高性能・最高コストのモデルで処理する',s:0},
+          {t:'軽量モデルで一次処理しスコアリング後、閾値以下のもののみ高性能モデルで再処理するカスケード構成',s:3},
+          {t:'全てのドキュメントを人手でレビューする',s:0},
+          {t:'モデルは1種類に統一しAPIバージョンを固定する',s:1},
+        ]},
+      { domain:'finetuning', text:'RLHFやDPOなどの手法でモデルをアライメントするとき、最も根本的な目的はどれですか？',
+        opts:[
+          {t:'モデルのパラメータ数を増やす',s:0},
+          {t:'モデルの出力が人間の意図・価値観・安全性に沿うよう調整する',s:3},
+          {t:'推論速度を上げる',s:0},
+          {t:'学習データから個人情報を削除する',s:0},
+        ]},
+      { domain:'security', text:'AIが生成したコードを本番環境にデプロイする前の必須チェックとして最も重要なものはどれですか？',
+        opts:[
+          {t:'コードのインデントが統一されているか',s:0},
+          {t:'セキュリティ脆弱性（インジェクション・認証バイパス・シークレットのハードコード等）の有無をレビューする',s:3},
+          {t:'コメントが英語かどうか',s:0},
+          {t:'ファイルサイズが規定以下かどうか',s:0},
+        ]},
+      { domain:'architecture', text:'Computer Use（LLMがGUI画面を操作する機能）と従来のRPAが最も異なる点はどれですか？',
+        opts:[
+          {t:'処理速度がRPAより圧倒的に速い',s:0},
+          {t:'UI変更でスクリプトが壊れるRPAと違い、画面を視覚的に認識して動的に次の操作を決定できる',s:3},
+          {t:'完全オフラインで動作する',s:0},
+          {t:'特定のアプリケーション専用に設計されている',s:0},
+        ]},
+    ]
+  },
+
+  // ── 非IT技術者版 (15問) ──────────────────────────
+  non: {
+    label: '非IT技術者版',
+    badgeClass: 'non-badge',
+    fillClass: 'non-fill',
+    selectedClass: 'selected-non',
+    accentColor: '#1E8C5A',
+    type: 'scored',
+    domains: [
+      { key: 'basic',    label: 'AIの基本的な仕組み' },
+      { key: 'usage',    label: '上手な使い方' },
+      { key: 'pitfall',  label: '実務の注意点' },
+      { key: 'tools',    label: 'ツールの使い分け' },
+      { key: 'risk',     label: 'リスクと判断' },
+    ],
+    levels: [
+      { min: 0,  max: 10, label: '入門',   desc: 'AIツールに触れ始めの段階です。基本的な仕組みと注意点を学ぶことで、安全かつ効果的に使えるようになります。' },
+      { min: 11, max: 22, label: '初級',   desc: '基本的な使い方は理解できています。出力の確認方法とツールごとの特性を意識するとさらに活用の幅が広がります。' },
+      { min: 23, max: 33, label: '中級',   desc: 'AIツールをビジネスで活用できる理解があります。情報管理とリスク判断の視点をさらに磨きましょう。' },
+      { min: 34, max: 45, label: '上級',   desc: 'AIツールの活用・判断・リスク管理が総合的にできています。チーム内でのAI活用推進をリードできます。' },
+    ],
+    questions: [
+      { domain:'basic', text:'ChatGPTやClaudeが同じ質問に毎回少し違う答えを返すのは、主にどういう理由からですか？',
+        opts:[
+          {t:'サーバーの混み具合によって処理が変わるから',s:0},
+          {t:'答えを確率的に選んで生成しており、毎回完全に同じにはならない仕組みだから',s:3},
+          {t:'毎回インターネット検索をして情報を取得しているから',s:1},
+          {t:'アカウントの使用履歴に基づいてカスタマイズされているから',s:0},
+        ]},
+      { domain:'basic', text:'AIが「もっともらしいが間違った情報」を出力することがあるのはなぜですか？',
+        opts:[
+          {t:'AIが意図的に嘘をついているから',s:0},
+          {t:'学習データのパターンを元に「それらしい言葉の続き」を生成するため、事実確認をせずに出力することがあるから',s:3},
+          {t:'インターネット接続が悪いと誤情報が混じるから',s:0},
+          {t:'古いモデルだけが起こす問題で、最新版では解決済みだから',s:1},
+        ]},
+      { domain:'usage', text:'AIチャットでより良い答えを引き出すために、最も効果的な入力の仕方はどれですか？',
+        opts:[
+          {t:'できるだけ短く、キーワードだけで入力する',s:0},
+          {t:'背景・目的・求める形式を具体的に伝える',s:3},
+          {t:'毎回新しいチャットを開いて質問する',s:1},
+          {t:'丁寧な敬語を使って入力する',s:0},
+        ]},
+      { domain:'usage', text:'AIに複雑な問題を解いてもらうとき、「ステップに分けて考えてみてください」と伝えるとよい理由は何ですか？',
+        opts:[
+          {t:'AIの処理速度が上がるから',s:0},
+          {t:'AIが論理的な順序で推論を進めやすくなり、精度が上がりやすいから',s:3},
+          {t:'トークン数を削減できてコストが下がるから',s:0},
+          {t:'出力が短くなって読みやすくなるから',s:1},
+        ]},
+      { domain:'pitfall', text:'AIが出力した文章を社外のお客様に送る前に、最低限すべきことはどれですか？',
+        opts:[
+          {t:'読みやすければそのまま送ってよい',s:0},
+          {t:'事実・数字・固有名詞が正しいか、トーンが適切かを自分の目で確認する',s:3},
+          {t:'AIが作成したと注釈を必ず付ける',s:1},
+          {t:'別のAIツールで二重チェックすれば十分',s:1},
+        ]},
+      { domain:'pitfall', text:'AIが「参考文献：○○白書2023年版 p.34」と引用付きで答えた場合、どう扱うのが適切ですか？',
+        opts:[
+          {t:'引用があるので信頼して使う',s:0},
+          {t:'引用元の書類を実際に確認し、内容が正確か検証する',s:3},
+          {t:'AIは嘘をつくので引用ごと無視する',s:0},
+          {t:'引用ページ番号が明記されているので正確なはず',s:0},
+        ]},
+      { domain:'tools', text:'ChatGPT・Claude・Geminiなど複数のAIチャットツールが存在しますが、使い分けの基準として最も実用的なものはどれですか？',
+        opts:[
+          {t:'どれも同じなので一番有名なものだけ使えばよい',s:0},
+          {t:'得意分野・コンテキストの長さ・連携サービスの違いを把握して、タスクに合わせて選ぶ',s:3},
+          {t:'値段が高いほど良いので最も高価なプランを使う',s:1},
+          {t:'新しく出たものが常に最良なので最新リリースを使う',s:0},
+        ]},
+      { domain:'tools', text:'会社の重要な会議録や顧客情報をAIチャットに入力する前に確認すべきことは何ですか？',
+        opts:[
+          {t:'AIは安全なので特に確認しなくてよい',s:0},
+          {t:'そのサービスの利用規約で入力データがモデルの学習に使われないか、社内のセキュリティポリシーで許可されているかを確認する',s:3},
+          {t:'パスワードさえかけておけば安全',s:0},
+          {t:'有料プランなら安全が保証されている',s:0},
+        ]},
+      { domain:'risk', text:'部下がAIに作らせたレポートをそのまま上司に提出しようとしていました。あなたはどう助言しますか？',
+        opts:[
+          {t:'時間の節約になるのでそのまま提出してよいと伝える',s:0},
+          {t:'内容の事実確認・自分の視点の追加・フォーマット確認を行ってから提出するよう伝える',s:3},
+          {t:'AIを使ったことを隠すように助言する',s:0},
+          {t:'AIを使うこと自体をやめるよう助言する',s:0},
+        ]},
+      { domain:'basic', text:'現在の主要なAIチャットツールが基本的に「できないこと」として正しいものはどれですか？',
+        opts:[
+          {t:'長い文章を短くまとめること',s:0},
+          {t:'文章の誤字脱字を見つけること',s:0},
+          {t:'リアルタイムで起きている出来事を（ツールなしに）正確に把握すること',s:3},
+          {t:'複数の言語に翻訳すること',s:0},
+        ]},
+      { domain:'usage', text:'同じAIに同じ質問を2回して異なる答えが返ってきました。このとき最も適切な判断はどれですか？',
+        opts:[
+          {t:'どちらかが正しくどちらかが嘘だと断定する',s:0},
+          {t:'AIの出力は確率的であること認識し、複数の回答を参考にしつつ自分で内容を判断する',s:3},
+          {t:'ツールが壊れていると考える',s:0},
+          {t:'2回目の答えの方が学習が進んでいるので正確だと考える',s:0},
+        ]},
+      { domain:'pitfall', text:'AIに「法的に問題ないですか？」「この投資は安全ですか？」と聞いて回答を得た場合、どう扱うべきですか？',
+        opts:[
+          {t:'AIは大量の知識を持っているので専門家と同等に信頼できる',s:0},
+          {t:'参考情報として活用しつつ、重要な判断は必ず専門家（弁護士・FP等）に確認する',s:3},
+          {t:'有料プランのAIなら専門家より信頼できる',s:0},
+          {t:'AIが自信満々に答えていれば正確と判断してよい',s:0},
+        ]},
+      { domain:'tools', text:'「画像や写真をAIに見せて情報を得る」機能が使える場面として現実的でないものはどれですか？',
+        opts:[
+          {t:'手書きのメモを写真に撮ってテキスト化する',s:0},
+          {t:'製品の外観写真から簡単な説明文を生成する',s:0},
+          {t:'AIが24時間ライブカメラを見続けて自動で異常を検知する',s:3},
+          {t:'資料のグラフ画像を読み取って数値を説明させる',s:0},
+        ]},
+      { domain:'risk', text:'「AIは客観的で人間より公平な判断ができる」という意見について、最も正確な見方はどれですか？',
+        opts:[
+          {t:'感情がない分、確かに人間より公平だ',s:0},
+          {t:'学習データに含まれる偏りを引き継ぐため、必ずしも公平ではない',s:3},
+          {t:'最新モデルは偏り問題を完全に解消済みだ',s:0},
+          {t:'用途によって公平・不公平が変わるので判断できない',s:1},
+        ]},
+      { domain:'risk', text:'業務でAIを活用するうえで「人間が最後に確認・判断するプロセスを必ず残す」ことが重要とされるのはなぜですか？',
+        opts:[
+          {t:'法律でそう定められているから',s:0},
+          {t:'AIはミスをしないので確認は不要',s:0},
+          {t:'AIの出力には誤り・偏り・文脈のズレが含まれうるため、責任ある判断と最終確認は人間が担う必要があるから',s:3},
+          {t:'AIを使ったことを隠すための慣習だから',s:0},
+        ]},
+    ]
+  },
+
+  // ── マインドセット版 (12問) ──────────────────────────
+  mind: {
+    label: 'マインドセット診断',
+    badgeClass: 'mind-badge',
+    fillClass: 'mind-fill',
+    selectedClass: 'selected-mind',
+    accentColor: '#C45000',
+    type: 'mindset',
+    types: [
+      { key:'trust',  label:'過信型',   emoji:'🔴', desc:'AIを正確・客観的と思い込みすぎる傾向。出力の検証習慣を意識的に作ることがおすすめです。',          color:'#E05252' },
+      { key:'rely',   label:'依存型',   emoji:'🟡', desc:'使えるがAIへの丸投げ・自分の判断を放棄しがち。最終判断の責任を意識することが大切です。',          color:'#C4880A' },
+      { key:'collab', label:'協調型',   emoji:'🟢', desc:'AIの特性・限界を理解し、人間の判断と組み合わせて使いこなせています。理想的なスタンスです。', color:'#1E8C5A' },
+      { key:'avoid',  label:'拒絶・慎重型', emoji:'🔵', desc:'AIへの不信や回避が強い傾向。特性を理解した上で部分的に取り入れると業務効率が上がります。',  color:'#2B4BFF' },
+    ],
+    questions: [
+      { domain:'AI認識', text:'AIチャットの回答を受け取ったとき、あなたはどう受け取ることが多いですか？',
+        opts:[
+          {t:'根拠が示されていれば基本的に正しいと判断する',            type:'trust'},
+          {t:'参考にするが、重要な判断では自分でも確かめる',            type:'collab'},
+          {t:'信用できないので、ほとんど参考にしない',                  type:'avoid'},
+          {t:'深く考えず、とりあえずそのまま使うことが多い',            type:'rely'},
+        ]},
+      { domain:'AI認識', text:'AIが自信満々に答えているとき、あなたはどう思いますか？',
+        opts:[
+          {t:'自信があるということは確かなのだろうと思う',              type:'trust'},
+          {t:'自信と正確さは別物なので、内容を確認しようと思う',        type:'collab'},
+          {t:'どうせ間違えることがあるから、どちらでも変わらない',      type:'avoid'},
+          {t:'そういうことをあまり考えたことがない',                    type:'rely'},
+        ]},
+      { domain:'AI認識', text:'同じ質問をAIに2回して違う答えが来たとき、どう解釈しますか？',
+        opts:[
+          {t:'どちらかが正しくどちらかが嘘だと思う',                   type:'trust'},
+          {t:'出力は確率的なので、どちらも「ありえる答え」と理解する',  type:'collab'},
+          {t:'やっぱりAIは使えないと感じる',                           type:'avoid'},
+          {t:'あまり気にせず、好みの方を使う',                         type:'rely'},
+        ]},
+      { domain:'信用度', text:'法律・医療・財務など専門性の高い判断でAIを使うとしたら？',
+        opts:[
+          {t:'大量の知識を持つAIは専門家より頼りになることもある',      type:'trust'},
+          {t:'参考情報として活用しつつ、最終判断は専門家に委ねる',      type:'collab'},
+          {t:'専門領域はAIを一切使わない',                             type:'avoid'},
+          {t:'周りが使っているなら自分も使う、という感じ',             type:'rely'},
+        ]},
+      { domain:'信用度', text:'AIが「○○という論文によると…」と引用付きで答えた場合、どうしますか？',
+        opts:[
+          {t:'引用がついているなら信頼できると判断する',               type:'trust'},
+          {t:'引用元が実在するか・内容が正確か実際に確認する',          type:'collab'},
+          {t:'どうせ嘘かもしれないと思って、引用ごと無視する',         type:'avoid'},
+          {t:'確認する方法がよくわからないのでそのまま使う',           type:'rely'},
+        ]},
+      { domain:'信用度', text:'「AIは客観的で公平な判断ができる」という意見についてどう思いますか？',
+        opts:[
+          {t:'人間より感情がない分、確かに公平だと思う',               type:'trust'},
+          {t:'学習データの偏りを引き継ぐため、必ずしも公平ではない',    type:'collab'},
+          {t:'AIがどうあれ、自分は人間の判断しか信じない',             type:'avoid'},
+          {t:'あまり考えたことがなかった',                             type:'rely'},
+        ]},
+      { domain:'役割分担', text:'業務でAIを使うとき、あなたの理想的な関わり方は？',
+        opts:[
+          {t:'任せられるものはすべて任せて、自分は結果だけ受け取りたい',type:'rely'},
+          {t:'AIが下書きや調査を担い、判断・責任は自分が持つ',         type:'collab'},
+          {t:'AIに仕事を取られる感覚があるので、できるだけ使いたくない',type:'avoid'},
+          {t:'使い方に迷っていて、周囲に合わせている',                 type:'rely'},
+        ]},
+      { domain:'役割分担', text:'AIが出した意思決定を「AIが決めました」と説明することについてどう思いますか？',
+        opts:[
+          {t:'合理的な判断なら問題ないと思う',                        type:'trust'},
+          {t:'最終判断と責任は人間にあるべきで、AIはその補助',         type:'collab'},
+          {t:'AIを使ったこと自体を隠した方が無難だと思う',            type:'avoid'},
+          {t:'あまり深く考えていなかった',                            type:'rely'},
+        ]},
+      { domain:'役割分担', text:'AIがほとんどの知的作業を代替できるようになったとき、人間が担うべき役割は？',
+        opts:[
+          {t:'特に人間にしかできないことはなくなると思う',             type:'trust'},
+          {t:'目的・倫理・文脈の判断や関係者との合意形成など',         type:'collab'},
+          {t:'人間の役割は変わらないし、変えるべきではない',           type:'avoid'},
+          {t:'よくわからないので考えないようにしている',               type:'rely'},
+        ]},
+      { domain:'判断力', text:'AIが生成した文章を社外に送る前に、あなたは何をしますか？',
+        opts:[
+          {t:'読みやすければそのまま送る',                            type:'rely'},
+          {t:'事実・トーン・意図のズレがないか確認してから送る',       type:'collab'},
+          {t:'AIが作ったものは送らない主義',                          type:'avoid'},
+          {t:'状況によって違うが、あまりルールを決めていない',         type:'rely'},
+        ]},
+      { domain:'判断力', text:'同僚がAIの回答をそのままコピーして会議で発表しようとしているとき、あなたは？',
+        opts:[
+          {t:'問題ないと思うので何も言わない',                        type:'rely'},
+          {t:'内容の確認を促し、必要なら一緒に検証する',              type:'collab'},
+          {t:'AIを使うこと自体をやめるよう促す',                      type:'avoid'},
+          {t:'自分には関係ないと思って何もしない',                    type:'rely'},
+        ]},
+      { domain:'判断力', text:'「AIを使いこなせる人」と「使いこなせない人」の差は何だと思いますか？',
+        opts:[
+          {t:'AIをどれだけ信じて頼れるか',                           type:'trust'},
+          {t:'AIの特性・限界を理解した上で自分の判断と組み合わせられるか',type:'collab'},
+          {t:'AIを使わない判断ができるか',                           type:'avoid'},
+          {t:'特に差はないと思う、誰でも使えばいい',                  type:'rely'},
+        ]},
+      { domain:'状況判断', text:'締め切りまで1時間。完成度より提出が最優先のとき、どうしますか？',
+        opts:[
+          {t:'AIに全部作ってもらう。この状況では速さ最優先で合理的だ',   type:'rely'},
+          {t:'骨子だけ自分で決め、文章化・肉付けをAIに任せる',          type:'collab'},
+          {t:'時間がなくてもAI頼りは怖いので、不完全でも自力でやる',    type:'avoid'},
+          {t:'AIが作ったものそのまま出しても、相手には分からないと割り切る', type:'trust'},
+        ]},
+      { domain:'状況判断', text:'毎日同じ形式のレポートを書く定型業務。AIをどう使いますか？',
+        opts:[
+          {t:'完全に任せてほぼ見ない。どうせ毎回同じ内容だから',         type:'trust'},
+          {t:'テンプレートを渡してAIに下書きさせ、数値や異常点だけ確認する', type:'collab'},
+          {t:'定型作業こそ人間がやるべきで、AIは使わない',              type:'avoid'},
+          {t:'便利そうなのでとりあえず使うが、特にルールは決めていない',  type:'rely'},
+        ]},
+      { domain:'状況判断', text:'チームで同じAIツールを導入することになった。あなたはどんな役割を取りますか？',
+        opts:[
+          {t:'AIの出した答えを積極的にチームへ広める',                  type:'trust'},
+          {t:'使い方のルールや確認フローを整備して、チーム全体の精度を上げる', type:'collab'},
+          {t:'方針が固まるまで様子見する',                              type:'avoid'},
+          {t:'周囲が使い始めたら自分も合わせる',                        type:'rely'},
+        ]},
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let current = null;
+let qIndex = 0;
+let answers = {};
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function startDiag(key) {
+  current = key;
+  qIndex = 0;
+  answers = {};
+  show('quizScreen');
+  renderQuestion();
+}
+
+function goHome() {
+  current = null;
+  show('selectorScreen');
+}
+
+function goNext() {
+  qIndex++;
+  const d = DIAGS[current];
+  if (qIndex >= d.questions.length) {
+    renderResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function show(id) {
+  ['selectorScreen','quizScreen','resultScreen'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'block' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════
+// QUIZ RENDER
+// ═══════════════════════════════════════════════
+function renderQuestion() {
+  const d = DIAGS[current];
+  const q = d.questions[qIndex];
+  const total = d.questions.length;
+  const pct = Math.round((qIndex / total) * 100);
+
+  document.getElementById('quizBadge').className = 'quiz-type-badge ' + d.badgeClass;
+  document.getElementById('quizBadge').textContent = d.label;
+  document.getElementById('progressText').textContent = `${qIndex + 1} / ${total}`;
+
+  const fill = document.getElementById('progressFill');
+  fill.className = 'progress-fill ' + d.fillClass;
+  fill.style.width = pct + '%';
+
+  document.getElementById('qDomain').textContent = q.domain;
+  document.getElementById('qText').textContent = q.text;
+
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.textContent = qIndex < total - 1 ? '次の質問 →' : '結果を見る →';
+  nextBtn.className = 'next-btn' + (answers[qIndex] !== undefined ? ' ready' : '');
+
+  const list = document.getElementById('optsList');
+  list.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn' + (answers[qIndex] === i ? ' ' + d.selectedClass : '');
+    btn.textContent = opt.t;
+    btn.onclick = () => selectOpt(i);
+    list.appendChild(btn);
+  });
+}
+
+function selectOpt(i) {
+  answers[qIndex] = i;
+  const d = DIAGS[current];
+  document.querySelectorAll('.opt-btn').forEach((b, idx) => {
+    b.className = 'opt-btn' + (idx === i ? ' ' + d.selectedClass : '');
+  });
+  document.getElementById('nextBtn').className = 'next-btn ready';
+}
+
+// ═══════════════════════════════════════════════
+// RESULT RENDER
+// ═══════════════════════════════════════════════
+function renderResult() {
+  const d = DIAGS[current];
+  document.getElementById('resultBadge').className = 'quiz-type-badge ' + d.badgeClass;
+  document.getElementById('resultBadge').textContent = d.label;
+  show('resultScreen');
+
+  if (d.type === 'scored') renderScoredResult(d);
+  else renderMindsetResult(d);
+}
+
+function renderScoredResult(d) {
+  // calc total
+  let total = 0, maxTotal = 0;
+  d.questions.forEach((q, i) => {
+    const maxS = Math.max(...q.opts.map(o => o.s));
+    maxTotal += maxS;
+    if (answers[i] !== undefined) total += q.opts[answers[i]].s;
+  });
+
+  // domain scores
+  const domMap = {};
+  d.domains.forEach(dm => domMap[dm.key] = {got:0, max:0});
+  d.questions.forEach((q, i) => {
+    const maxS = Math.max(...q.opts.map(o => o.s));
+    domMap[q.domain].max += maxS;
+    if (answers[i] !== undefined) domMap[q.domain].got += q.opts[answers[i]].s;
+  });
+
+  const level = d.levels.find(l => total >= l.min && total <= l.max) || d.levels[0];
+
+  const barsHTML = d.domains.map(dm => {
+    const v = domMap[dm.key];
+    const pct = v.max > 0 ? Math.round(v.got / v.max * 100) : 0;
+    return `<div class="domain-row">
+      <div class="domain-label">${dm.label}</div>
+      <div class="bar-track"><div class="bar-val" style="width:${pct}%;background:${d.accentColor};"></div></div>
+      <div class="bar-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('resultBody').innerHTML = `
+    <div class="result-eyebrow">診断結果</div>
+    <div class="result-level">${level.label}</div>
+    <div class="result-score-line">${total} / ${maxTotal} 点</div>
+    <div class="result-desc">${level.desc}</div>
+    <div class="domain-section-title">領域別スコア</div>
+    <div class="domain-bars">${barsHTML}</div>
+    <button class="review-toggle" id="reviewToggle" onclick="toggleReview()">
+      <span>回答の振り返りを見る</span>
+      <span class="review-toggle-arrow">▾</span>
+    </button>
+    <div class="review-body" id="reviewBody">${buildReviewHTML(d)}</div>
+    <div class="action-row">
+      <button class="action-btn" onclick="restartSame()">もう一度診断する</button>
+      <button class="action-btn" onclick="goHome()">診断を選び直す</button>
+    </div>
+  `;
+
+  // animate bars
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.bar-val').forEach(b => {
+      const w = b.style.width; b.style.width = '0'; 
+      setTimeout(() => b.style.width = w, 50);
+    });
+  });
+}
+
+function renderMindsetResult(d) {
+  const typeCounts = { trust:0, rely:0, collab:0, avoid:0 };
+  d.questions.forEach((q, i) => {
+    if (answers[i] !== undefined) {
+      const t = q.opts[answers[i]].type;
+      typeCounts[t]++;
+    }
+  });
+
+  // Sort by count descending
+  const sorted = Object.entries(typeCounts).sort((a,b) => b[1]-a[1]);
+  const topCount = sorted[0][1];
+  const secondCount = sorted[1][1];
+  const total = d.questions.length;
+
+  // Determine dominant: collab must win by margin ≥2 to count as clear collab
+  // (reduces social desirability bias where people always pick collab)
+  let dominant;
+  if (sorted[0][0] === 'collab' && topCount - secondCount <= 1) {
+    // collab leads by only 1 or tied → use second type as co-dominant
+    dominant = sorted[1][1] > 0 ? sorted[1][0] : 'collab';
+  } else {
+    dominant = sorted[0][0];
+  }
+
+  const domType = d.types.find(t => t.key === dominant);
+  const isNarrow = topCount - secondCount <= 1 && sorted[1][1] > 0;
+  const secondType = isNarrow ? d.types.find(t => t.key === sorted[1][0]) : null;
+
+  const typeCardsHTML = d.types.map(t => `
+    <div class="type-card${t.key === dominant ? ' dominant' : ''}">
+      <div class="type-name" style="color:${t.color}">${t.emoji} ${t.label}</div>
+      <div class="type-count" style="color:${t.color}">${typeCounts[t.key]}</div>
+      <div class="type-label">回答数</div>
+    </div>
+  `).join('');
+
+  document.getElementById('resultBody').innerHTML = `
+    <div class="result-eyebrow">診断結果</div>
+    <div class="result-level" style="color:${domType.color}">${domType.emoji} ${domType.label}</div>
+    <div class="result-score-line">${isNarrow && secondType ? `${domType.label} 寄り ${secondType.emoji} ${secondType.label}` : '最多傾向タイプ'}</div>
+    <div class="result-desc">${domType.desc}${isNarrow && secondType ? `<br><br><span style="color:var(--ink-faint);font-size:12px;">※ ${secondType.label}（${secondType.emoji}）傾向も同程度見られます。</span>` : ''}</div>
+    <div class="domain-section-title">傾向タイプ内訳</div>
+    <div class="type-grid">${typeCardsHTML}</div>
+    <div class="action-row">
+      <button class="action-btn" onclick="restartSame()">もう一度診断する</button>
+      <button class="action-btn" onclick="goHome()">診断を選び直す</button>
+    </div>
+  `;
+}
+
+function buildReviewHTML(d) {
+  return d.questions.map((q, i) => {
+    const userIdx = answers[i];
+    const maxScore = Math.max(...q.opts.map(o => o.s));
+    const correctIdx = q.opts.findIndex(o => o.s === maxScore);
+    const userScore = userIdx !== undefined ? q.opts[userIdx].s : 0;
+
+    const optsHTML = q.opts.map((opt, oi) => {
+      const isUser = oi === userIdx;
+      const isCorrect = oi === correctIdx;
+      let cls = 'neutral', icon = '　';
+
+      if (isUser && isCorrect) { cls = 'user-correct'; icon = '✓'; }
+      else if (isUser && userScore > 0) { cls = 'user-partial'; icon = '△'; }
+      else if (isUser) { cls = 'user-wrong'; icon = '✗'; }
+      else if (isCorrect) { cls = 'correct-not-chosen'; icon = '✓'; }
+
+      if (!isUser && !isCorrect) return '';
+      return `<div class="review-opt ${cls}"><span class="review-opt-icon">${icon}</span><span>${opt.t}</span></div>`;
+    }).join('');
+
+    const scoreLabel = userScore === maxScore ? '正解' : userScore > 0 ? `部分点 (${userScore}/${maxScore})` : `不正解 (0/${maxScore})`;
+
+    return `
+      <div class="review-item">
+        <div class="review-item-header">
+          <div class="review-q-num">Q${i+1} · ${q.domain} · ${scoreLabel}</div>
+          <div class="review-q-text">${q.text}</div>
+        </div>
+        <div class="review-opts">${optsHTML}</div>
+      </div>`;
+  }).join('');
+}
+
+function toggleReview() {
+  const btn = document.getElementById('reviewToggle');
+  const body = document.getElementById('reviewBody');
+  btn.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function restartSame() {
+  const key = current;
+  startDiag(key);
+}
+
+// init
+show('selectorScreen');
+</script>
+</body>
+</html>
